@@ -26,10 +26,10 @@ jobs:
     - name: Run Checkstyle
       run: mvn checkstyle:checkstyle
 
-    - name: Set up SonarScanner
+    - name: Set up SonarCloud Scanner
       uses: SonarSource/sonarcloud-github-action@v1
 
-    - name: SonarCloud Scan
+    - name: Run SonarCloud Scan
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
@@ -44,9 +44,16 @@ jobs:
           -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
 
     - name: SonarCloud Quality Gate Check
-      id: sonarqube-quality-gate-check
-      uses: SonarSource/sonarcloud-quality-gate-action@v1
+      # Manual Quality Gate Check
+      id: quality-gate
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
-      timeout-minutes: 5
+      run: |
+        STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "${{ secrets.SONAR_URL }}/api/qualitygates/project_status?projectKey=${{ secrets.SONAR_PROJECT_KEY }}" | jq -r .projectStatus.status)
+        if [ "$STATUS" != "OK" ]; then
+          echo "Quality Gate failed: $STATUS"
+          exit 1
+        else
+          echo "Quality Gate passed: $STATUS"
+        fi
+      shell: bash

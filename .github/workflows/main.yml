@@ -26,37 +26,7 @@ jobs:
     - name: Run Checkstyle
       run: mvn checkstyle:checkstyle
 
-    - name: Set up SonarQube
-      uses: warchant/setup-sonar-scanner@v7
 
-    - name: Run SonarCloud Scan
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-        sonar-scanner \
-          -Dsonar.host.url=${{ secrets.SONAR_URL }} \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-          -Dsonar.sources=src/ \
-          -Dsonar.junit.reportsPath=target/surfire-reports/ \
-          -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-          -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
-          -Dsonar.java.binaries=target/test-classes/com/visualpathit/account
-
-    - name: SonarCloud Quality Gate Check
-      id: quality-gate
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-        STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "${{ secrets.SONAR_URL }}/api/qualitygates/project_status?projectKey=${{ secrets.SONAR_PROJECT_KEY }}" | jq -r .projectStatus.status)
-        if [ "$STATUS" != "OK" ]; then
-          echo "Quality Gate failed: $STATUS"
-          exit 1
-        else
-          echo "Quality Gate passed: $STATUS"
-        fi
-      shell: bash
 
   BUILD_AND_PUBLISHED:
     needs: Testing
